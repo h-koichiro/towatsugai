@@ -1,5 +1,3 @@
 Flask
 Gunicorn
-linebot
-linebot.exceptions
-linebot.models
+line-bot-sdk
