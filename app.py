@@ -35,7 +35,7 @@ def handle_message(event):
 
 @app.route('/')
 def index():
-    return ("AAAAAAAAAAA")
+    return ("ｂｂｂｂｂ")
 if __name__ == "__main__":
 #    app.run()
     port = int(os.getenv("PORT", 5000))
