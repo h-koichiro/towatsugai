@@ -1,49 +1,52 @@
+
 from flask import Flask, request, abort
+
 from linebot import (
-　LineBotApi, WebhookHandler
+    LineBotApi, WebhookHandler
 )
 from linebot.exceptions import (
-　InvalidSignatureError
+    InvalidSignatureError
 )
 from linebot.models import (
-　MessageEvent, TextMessage, TextSendMessage, ImageMessage, ImageSendMessage
+    MessageEvent, TextMessage, TextSendMessage,
 )
+import os
 
 app = Flask(__name__)
 
-ACCESS_TOKEN = "YOURE_CHANNEL_ACCESS_TOKEN"
-SECRET = "YOUR_CHANNEL_SECRET"
+#環境変数取得
+YOUR_CHANNEL_ACCESS_TOKEN = os.environ["jlgmsj1CCoCWSLh491ILVZxpJNLsqSoyFrgbXTFjmnBcMuQqaRm6sUQOqwLVav/c8zFzeZNSg3UDLHVBKqj4gRsMw/ZHH1q4YP0W1IKX8PpihfKA3PCibwbys1hr8inEjDZaNjYgOZ5TKErIZ/8bDAdB04t89/1O/w1cDnyilFU="]
+YOUR_CHANNEL_SECRET = os.environ["644c830373e830f0a682507bc73b23e6"]
 
-FQDN = "Herokuで割り当てられたURL"
-
-line_bot_api = LineBotApi(ACCESS_TOKEN)
-handler = WebhookHandler(SECRET)
+line_bot_api = LineBotApi(YOUR_CHANNEL_ACCESS_TOKEN)
+handler = WebhookHandler(YOUR_CHANNEL_SECRET)
 
 @app.route("/callback", methods=['POST'])
 def callback():
-　signature = request.headers['X-Line-Signature'] 　body = request.get_data(as_text=True)
-　app.logger.info("Request body: " + body)
+    # get X-Line-Signature header value
+    signature = request.headers['X-Line-Signature']
 
-　try:
-　　handler.handle(body, signature)
-　except InvalidSignatureError:
-　　abort(400)
+    # get request body as text
+    body = request.get_data(as_text=True)
+    app.logger.info("Request body: " + body)
 
-　return 'OK'
+    # handle webhook body
+    try:
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        abort(400)
 
-@handler.add(MessageEvent, message=ImageMessage)
-def handle_image_message(event):
-　message_content = line_bot_api.get_message_content(event.message.id)
-　
-　with open("static/" + event.message.id + ".jpg", "wb") as f:
-　　f.write(message_content.content)
-　　line_bot_api.reply_message(
-　　　event.reply_token,
-　　　ImageSendMessage(
-　　　　original_content_url=FQDN + "/static/" + event.message.id + ".jpg",
-　　　　preview_image_url=FQDN + "/static/" + event.message.id + "jpg"
-　　　)
-　　)
+    return 'OK'
+
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text=event.message.text))
+
 
 if __name__ == "__main__":
-　app.run()
+#    app.run()
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
