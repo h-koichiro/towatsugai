@@ -1,4 +1,4 @@
-from flask import Flask, request, abort
+from flask import Flask, request, abort, render_template, redirect
 from linebot import (
     LineBotApi, WebhookHandler
 )
@@ -8,38 +8,53 @@ from linebot.exceptions import (
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
 )
-import os
+
 app = Flask(__name__)
-#環境変数取得
+
+def txt_r():
+    f = open('state.txt', 'r', encoding='UTF-8')
+    STATE = f.read()
+    f.close()
+    return STATE
+
+def txt_w(state):
+    f = open('state.txt', 'w', encoding='UTF-8')
+    f.write(state)
+    f.close()
+
+@app.route('/')
+def index():
+    state = txt_r()
+    print(state)
+    return render_template("index.html", state=state)
+
+
 line_bot_api = LineBotApi("jlgmsj1CCoCWSLh491ILVZxpJNLsqSoyFrgbXTFjmnBcMuQqaRm6sUQOqwLVav/c8zFzeZNSg3UDLHVBKqj4gRsMw/ZHH1q4YP0W1IKX8PpihfKA3PCibwbys1hr8inEjDZaNjYgOZ5TKErIZ/8bDAdB04t89/1O/w1cDnyilFU=")
 handler = WebhookHandler("644c830373e830f0a682507bc73b23e6")
 @app.route("/callback", methods=['POST'])
 def callback():
-    # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
-    # get request body as text
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
-    # handle webhook body
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
     return 'OK'
+
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=event.message.text))
-
+    # line_bot_api.reply_message(
+    #     event.reply_token,
+    #     TextSendMessage(text=event.message.text))
+    txt_w(event.message.text)
+    return redirect("/")
 
 @app.route('/')
 def index():
-    return ("ｂｂｂｂｂ")
+    return render_template("index.html", state=txt_r())
+
+
 if __name__ == "__main__":
-#    app.run()
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
     app.run()
-#     port = int(os.getenv("PORT", 5000))
-#     app.run(host="0.0.0.0", port=port)
